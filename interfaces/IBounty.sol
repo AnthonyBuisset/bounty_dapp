@@ -2,6 +2,13 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 interface IBounty {
+
+    function init(
+        string memory bounties_metadata_uri_,
+        address participations_,
+        address claimer_
+    ) external ;
+
     function createBounty(
         uint256 bounty_id_,
         address reward_token_,

@@ -2,15 +2,16 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "../interfaces/IBountyMaker.sol";
-import "./Bounty.sol";
+import "../interfaces/IBounty.sol";
+import "../interfaces/IBountyRewardsClaimer.sol";
 import "./BountyParticipation.sol";
-import "./BountyRewardsClaimer.sol";
 import "./ERC20BountyReward.sol";
 import "./ERC721BountyReward.sol";
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract BountyMaker is
     IBountyMaker,
@@ -18,12 +19,24 @@ contract BountyMaker is
     IERC1155Receiver,
     Context
 {
+    address private _master_bounty;
+    address private _master_claimer;
+    address private _master_participations;
+    address private _master_erc20_rewards;
+    address private _master_erc721_rewards;
+
     address[] private _daos;
     mapping(address => address[]) private _repositories; // DAO -> repositories
     mapping(address => address) private _erc20_rewards; // DAO -> ERC20BountyReward
     mapping(address => address) private _erc721_rewards; // DAO -> ERC721BountyReward
 
-    constructor() {}
+    constructor(address master_bounty_, address master_claimer_, address master_participations_, address master_erc20_rewards_, address master_erc721_rewards_) {
+        _master_bounty = master_bounty_;
+        _master_claimer = master_claimer_;
+        _master_participations = master_participations_;
+        _master_erc20_rewards = master_erc20_rewards_;
+        _master_erc721_rewards = master_erc721_rewards_;
+    }
 
     function createBountyRepository(
         string memory bounties_metadata_uri_,
@@ -31,16 +44,23 @@ contract BountyMaker is
     ) external virtual override {
         if (_repositories[_msgSender()].length == 0) {
             _daos.push(_msgSender());
-            _erc20_rewards[_msgSender()] = address(new ERC20BountyReward());
-            _erc721_rewards[_msgSender()] = address(new ERC721BountyReward());
+            _erc20_rewards[_msgSender()] = address(Clones.clone(_master_erc20_rewards));
+            _erc721_rewards[_msgSender()] = address(Clones.clone(_master_erc721_rewards));
         }
-        address participations = address(
-            new BountyParticipation(participation_metadata_uri_)
-        );
-        address claimer = address(new BountyRewardsClaimer(participations));
-        address bounty = address(
-            new Bounty(bounties_metadata_uri_, participations, claimer)
-        );
+
+        IBountyParticipation participationsClone = IBountyParticipation(Clones.clone(_master_participations));
+        participationsClone.init(participation_metadata_uri_);
+        address participations = address(participationsClone);
+
+        IBountyRewardsClaimer claimerClone = IBountyRewardsClaimer(Clones.clone(_master_claimer));
+        claimerClone.init(participations);
+        address claimer = address(claimerClone);
+
+        IBounty bountyClone = IBounty(Clones.clone(_master_bounty));
+        bountyClone.init(bounties_metadata_uri_, participations, claimer);
+
+        address bounty = address(bountyClone);
+        
         IERC1155(_erc20_rewards[_msgSender()]).setApprovalForAll(bounty, true);
         IERC1155(_erc721_rewards[_msgSender()]).setApprovalForAll(bounty, true);
         _repositories[_msgSender()].push(bounty);

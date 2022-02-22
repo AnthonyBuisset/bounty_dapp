@@ -14,7 +14,11 @@ contract BountyParticipation is IBountyParticipation, ERC1155 {
 
     mapping(uint256 => Status) private _statuses;
 
-    constructor(string memory metadata_uri_) ERC1155(metadata_uri_) {}
+    constructor() ERC1155("") {}
+
+    function init(string memory metadata_uri_) external virtual override {
+        _setURI(metadata_uri_);
+    }
 
     function create(
         uint256 id_,

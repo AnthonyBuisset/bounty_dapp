@@ -2,6 +2,9 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 interface IBountyRewardsClaimer {
+
+    function init(address _participations_) external ;
+    
     function unlockReward(
         address reward_address_,
         uint256 reward_id_,

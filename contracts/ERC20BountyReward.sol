@@ -25,7 +25,7 @@ contract ERC20BountyReward is IERC20BountyReward, ERC1155 {
     function createReward(
         address rewards_token_address,
         uint256 rewards_token_value
-    ) external returns (uint256) {
+    ) external override virtual returns (uint256) {
         _rewards[_tokenIdTracker.current()] = Reward(
             rewards_token_address,
             rewards_token_value

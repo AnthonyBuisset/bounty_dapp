@@ -24,7 +24,7 @@ contract ERC721BountyReward is IERC721BountyReward, ERC1155, IERC721Receiver {
     function createReward(
         address rewards_token_address,
         uint256 rewards_token_id
-    ) external returns (uint256) {
+    ) external override virtual returns (uint256) {
         _rewards[_tokenIdTracker.current()] = Reward(
             rewards_token_address,
             rewards_token_id

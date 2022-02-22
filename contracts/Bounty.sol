@@ -31,14 +31,17 @@ contract Bounty is IBounty, ERC1155, IERC1155Receiver {
     mapping(uint256 => Reward) private _rewards;
     mapping(uint256 => Status) private _statuses;
 
-    constructor(
+    constructor() ERC1155(""){
+    }
+
+    function init(
         string memory bounties_metadata_uri_,
         address participations_,
         address claimer_
-    ) ERC1155(bounties_metadata_uri_) {
+    ) external virtual override {
+        _setURI(bounties_metadata_uri_);
         _participations = participations_;
         _claimer = claimer_;
-
         IERC1155(_participations).setApprovalForAll(_claimer, true);
     }
 

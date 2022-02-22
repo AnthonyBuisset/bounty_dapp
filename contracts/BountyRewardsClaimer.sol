@@ -19,7 +19,7 @@ contract BountyRewardsClaimer is Context, IBountyRewardsClaimer, IERC1155Receive
 
     mapping(uint256 => Reward) _claimable_participations;
 
-    constructor(address _participations_) {
+    function init(address _participations_) external virtual override {
         _participations = _participations_;
     }
 
